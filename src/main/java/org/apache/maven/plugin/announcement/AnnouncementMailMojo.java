@@ -19,18 +19,11 @@ package org.apache.maven.plugin.announcement;
  * under the License.
  */
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.List;
-
-import javax.mail.internet.AddressException;
-import javax.mail.internet.InternetAddress;
-
 import org.apache.maven.model.Developer;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.announcement.mailsender.EwsMailSender;
 import org.apache.maven.plugin.announcement.mailsender.ProjectJavamailMailSender;
+import org.apache.maven.plugin.announcement.mailsender.ProjectMailSender;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.Execute;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -41,6 +34,14 @@ import org.codehaus.plexus.logging.console.ConsoleLogger;
 import org.codehaus.plexus.mailsender.MailMessage;
 import org.codehaus.plexus.mailsender.MailSenderException;
 import org.codehaus.plexus.util.IOUtil;
+
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Goal which sends an announcement through email.
@@ -114,16 +115,28 @@ public class AnnouncementMailMojo
     @Component
     private MavenProject project;
 
+    @Parameter(property = "changes.mailMode",defaultValue = "smtp",required = true)
+    private String mailMode;
+
+
+
+    /**
+     * Exchange Web Services Url
+     */
+    @Parameter( property = "changes.ewsUrl")
+    private String ewsUrl;
+
+
     /**
      * Smtp Server.
      */
-    @Parameter( property = "changes.smtpHost", required = true )
+    @Parameter( property = "changes.smtpHost")
     private String smtpHost;
 
     /**
      * Port.
      */
-    @Parameter( property = "changes.smtpPort", defaultValue = "25", required = true )
+    @Parameter( property = "changes.smtpPort", defaultValue = "25")
     private int smtpPort;
 
     /**
@@ -180,7 +193,7 @@ public class AnnouncementMailMojo
     @Parameter( property = "changes.username" )
     private String username;
 
-    private ProjectJavamailMailSender mailer = new ProjectJavamailMailSender();
+    private ProjectMailSender mailer;
 
     public void execute()
         throws MojoExecutionException
@@ -192,6 +205,15 @@ public class AnnouncementMailMojo
         }
         else
         {
+
+            if (mailMode.equals("smtp")) {
+                mailer=new ProjectJavamailMailSender();
+            } else if (mailMode.equals("ews")) {
+                mailer=new EwsMailSender();
+            } else {
+                throw new MojoExecutionException("changes.mailMode unknown: "+mailMode);
+            }
+
             File templateFile = new File( templateOutputDirectory, template );
 
             ConsoleLogger logger = new ConsoleLogger( Logger.LEVEL_INFO, "base" );
@@ -208,6 +230,8 @@ public class AnnouncementMailMojo
             mailer.setSmtpPort( getSmtpPort() );
 
             mailer.setSslMode( sslMode );
+
+            mailer.setEwsUrl(getEwsUrl());
 
             if ( username != null )
             {
@@ -532,5 +556,13 @@ public class AnnouncementMailMojo
     public void setUsername( String username )
     {
         this.username = username;
+    }
+
+    public String getEwsUrl() {
+        return ewsUrl;
+    }
+
+    public void setEwsUrl(String ewsUrl) {
+        this.ewsUrl = ewsUrl;
     }
 }

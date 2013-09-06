@@ -19,30 +19,24 @@ package org.apache.maven.plugin.announcement.mailsender;
  * under the License.
  */
 
-import java.security.Security;
-import java.util.Date;
-import java.util.Properties;
-
-import javax.mail.Authenticator;
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.PasswordAuthentication;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-
 import org.codehaus.plexus.mailsender.AbstractMailSender;
 import org.codehaus.plexus.mailsender.MailMessage;
 import org.codehaus.plexus.mailsender.MailSenderException;
 import org.codehaus.plexus.mailsender.util.DateFormatUtils;
 import org.codehaus.plexus.util.StringUtils;
 
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+import java.security.Security;
+import java.util.Date;
+import java.util.Properties;
+
 /**
  * Helper class for sending email.
  */
 public class ProjectJavamailMailSender
-    extends AbstractMailSender
+    extends AbstractMailSender implements ProjectMailSender
 {
     private static final String SSL_FACTORY = "javax.net.ssl.SSLSocketFactory";
 
@@ -113,6 +107,10 @@ public class ProjectJavamailMailSender
                 props.put(key, value);
             }
         }
+    }
+
+    public void setEwsUrl(String ewsUrl) {
+        // parameter not needed here
     }
 
     // ----------------------------------------------------------------------
